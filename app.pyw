@@ -2,7 +2,7 @@ import json
 import math
 import tkinter as tk
 from enum import Enum, auto, IntFlag
-from tkinter import ttk, PhotoImage
+from tkinter import ttk, PhotoImage, font
 from typing import TypedDict, Generator, Any
 
 # TODO gettext
@@ -236,6 +236,7 @@ class App(tk.Frame):
         super().__init__(master)
 
         self.ui_main = None
+        self.fonts: list[font.Font] = []
         self.ghosts = GhostsInit()
 
         self.ghosts_buttons: list[GhostsButtons] = []
@@ -293,9 +294,14 @@ class App(tk.Frame):
         ui_column_2.pack(side=tk.RIGHT, fill=tk.Y)
         ui_column_1.pack(side=tk.LEFT, padx=(0, 10))
 
-        #
-        ttk.Style().configure('FoundMask.TButton', anchor=tk.W)
-        ttk.Style().configure('NotFoundMask.TButton', foreground="#777", anchor=tk.W)
+        tk_default_font = font.Font(font='TkDefaultFont').actual()
+        family, size = tk_default_font['family'], tk_default_font['size']
+        found_mask = font.Font(weight="bold", size=size)
+        not_found_mask = font.Font(weight="normal", size=size)
+        self.fonts.extend([found_mask, not_found_mask])
+
+        ttk.Style().configure('FoundMask.TButton', font=found_mask, anchor=tk.W)
+        ttk.Style().configure('NotFoundMask.TButton', font=not_found_mask, foreground="#777", anchor=tk.W)
 
         # Find the last element for the first column of ghosts
         ui_half = math.ceil(len(self.ghosts.get_all) / 2)
@@ -305,7 +311,8 @@ class App(tk.Frame):
             ui_select_column = ui_column_1 if i < ui_half else ui_column_2
             generator = self.circular_icon_generator()
             button = ttk.Button(ui_select_column, text=f' {_(ghost.name)}', style='NotFoundMask.TButton',
-                                image=next(generator), compound=tk.LEFT, width=0, padding=(10, 8, 20, 8))
+                                image=next(generator), compound=tk.LEFT,
+                                width=self.max_len_ghost_name(), padding=(10, 8, 20, 8))
             # Circular change button icon on click
             button.configure(command=lambda b=button, g=generator: App.ui_next_icon(b, g))
             button.pack(fill=tk.X, ipadx=0, ipady=0, pady=(8, 0))
@@ -358,6 +365,9 @@ class App(tk.Frame):
             var.set(False)
         self.events_mask.reset()
         self.search_ghosts_by_mask_of_all_checkboxes()
+
+    def max_len_ghost_name(self):
+        return len(max([_(ghost.name) for ghost in self.ghosts.get_all], key=len))
 
 
 if __name__ == '__main__':
