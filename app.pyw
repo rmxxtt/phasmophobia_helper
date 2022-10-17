@@ -1,5 +1,6 @@
 import json
 import math
+import platform
 import tkinter as tk
 from enum import Enum, auto, IntFlag
 from tkinter import ttk, PhotoImage, font
@@ -294,10 +295,20 @@ class App(tk.Frame):
         ui_column_2.pack(side=tk.RIGHT, fill=tk.Y)
         ui_column_1.pack(side=tk.LEFT, padx=(0, 10))
 
-        tk_default_font = font.Font(font='TkDefaultFont').actual()
-        family, size = tk_default_font['family'], tk_default_font['size']
-        found_mask = font.Font(weight="bold", size=size)
-        not_found_mask = font.Font(weight="normal", size=size)
+        family = None
+        match platform.system():
+            case "Windows":
+                family = 'Arial'
+            case "Darwin":
+                family = font.Font().actual()
+            case "Linux":
+                family = 'Noto Sans'
+            case _:
+                family = font.Font().actual()
+
+        size = font.Font(font='TkDefaultFont').actual()['size']
+        found_mask = font.Font(weight="bold", size=size, family=family)
+        not_found_mask = font.Font(weight="normal", size=size, family=family)
         self.fonts.extend([found_mask, not_found_mask])
 
         ttk.Style().configure('FoundMask.TButton', font=found_mask, anchor=tk.W)
@@ -312,7 +323,7 @@ class App(tk.Frame):
             generator = self.circular_icon_generator()
             button = ttk.Button(ui_select_column, text=f' {_(ghost.name)}', style='NotFoundMask.TButton',
                                 image=next(generator), compound=tk.LEFT,
-                                width=self.max_len_ghost_name(), padding=(10, 8, 20, 8))
+                                width=self.max_len_ghost_name() + 2, padding=(10, 8, 20, 8))
             # Circular change button icon on click
             button.configure(command=lambda b=button, g=generator: App.ui_next_icon(b, g))
             button.pack(fill=tk.X, ipadx=0, ipady=0, pady=(8, 0))
