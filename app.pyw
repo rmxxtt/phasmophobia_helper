@@ -262,8 +262,29 @@ class App(tk.Frame):
         self.ui_main = ttk.Frame()
         self.ui_main.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
+        self.ui_menu()
         self.ui_ghost_events()
         self.ui_ghost_list()
+
+    def ui_menu(self):
+        ui_main = ttk.LabelFrame(self.ui_main, text=_('Menu'), labelanchor=tk.N, padding=10)
+        ui_main.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))
+
+        button = ttk.Button(ui_main, text=_('About'), padding=(10, 2))
+        button.configure(command=lambda: None)
+        button.pack(side=tk.TOP, fill=tk.X, pady=(0, 8))
+
+        button = ttk.Button(ui_main, text=_('Timer'), padding=(10, 2))
+        button.configure(command=lambda: None)
+        button.pack(side=tk.TOP, fill=tk.X, pady=(0, 8))
+
+        button = ttk.Button(ui_main, text=_('Maps'), padding=(10, 2))
+        button.configure(command=lambda: None)
+        button.pack(side=tk.TOP, fill=tk.X, pady=(0, 8))
+
+        button = ttk.Button(ui_main, text=_('Settings'), padding=(10, 2))
+        button.configure(command=lambda: None)
+        button.pack(side=tk.BOTTOM, fill=tk.X, pady=(0, 0))
 
     def ui_ghost_events(self):
         ui_main = ttk.LabelFrame(self.ui_main, text=_('Events'), labelanchor=tk.N, padding=10)
