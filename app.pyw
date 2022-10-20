@@ -220,6 +220,11 @@ class GhostsButtons(TypedDict):
     generator: Generator[PhotoImage, Any, None]
 
 
+class EventsCheckboxes(TypedDict):
+    var: tk.BooleanVar
+    button: ttk.Checkbutton
+
+
 class Icon:
     def __init__(self):
         self.choose = PhotoImage(file='./assets/icon/choose.png')
@@ -242,7 +247,7 @@ class App(tk.Frame):
 
         self.ghosts_buttons: list[GhostsButtons] = []
 
-        self.events_checkboxes: list[tk.BooleanVar] = []
+        self.events_checkboxes: list[EventsCheckboxes] = []
         self.events_mask = Mask()
         """ Mask of all events flags """
 
@@ -294,14 +299,34 @@ class App(tk.Frame):
         ui_reset_button.configure(command=lambda: self.ui_reset_all_checkboxes())
         ui_reset_button.pack(side=tk.BOTTOM, fill=tk.X, pady=(20, 0))
 
+        family = None
+        match platform.system():
+            case "Windows":
+                family = 'Arial'
+            case "Darwin":
+                family = font.Font().actual()
+            case "Linux":
+                family = 'Noto Sans'
+            case _:
+                family = font.Font().actual()
+
+        size = font.Font(font='TkDefaultFont').actual()['size']
+        select = font.Font(weight="bold", size=size, family=family)
+        not_select = font.Font(weight="normal", size=size, family=family)
+        self.fonts.extend([select, not_select])
+
+        ttk.Style().configure('SelectEvent.TCheckbutton', font=select, background="#d5d5d5")
+        ttk.Style().configure('NotSelectEvent.TCheckbutton', font=not_select)
+
         # For - Skip 'Paranormal' parameters, 'NONE' and 'ALL'
         for event in list(Paranormal)[1:-1]:
             var = tk.BooleanVar()
             var.set(False)
             button = ttk.Checkbutton(ui_main, text=_(event.name), variable=var, onvalue=True, offvalue=False,
-                                     command=lambda v=var, e=event: self.ui_event_click(v, e))
+                                     style='NotSelectEvent.TCheckbutton', width=App.max_len_event_name() + 10)
+            button.configure(command=lambda v=var, e=event, b=button: self.ui_event_click(v, e, b))
             button.pack(anchor=tk.W)
-            self.events_checkboxes.append(var)
+            self.events_checkboxes.append(dict(var=var, button=button))
 
     def ui_ghost_list(self):
         ui_main = ttk.LabelFrame(self.ui_main, text=_('Ghosts'), labelanchor=tk.N, padding=10)
@@ -351,11 +376,13 @@ class App(tk.Frame):
             # For further operations, such as changing styles
             self.ghosts_buttons.append(dict(button=button, generator=generator, ghost=ghost))
 
-    def ui_event_click(self, var: tk.BooleanVar, event: Paranormal):
+    def ui_event_click(self, var: tk.BooleanVar, event: Paranormal, button: ttk.Checkbutton):
         if var.get():
             self.events_mask.set(event)
+            button.configure(style='SelectEvent.TCheckbutton')
         else:
             self.events_mask.delete(event)
+            button.configure(style='NotSelectEvent.TCheckbutton')
         self.search_ghosts_by_mask_of_all_checkboxes()
 
     def search_ghosts_by_mask_of_all_checkboxes(self):
@@ -393,13 +420,18 @@ class App(tk.Frame):
             button.configure(image=generator.send('reset'))
 
     def ui_reset_all_checkboxes(self):
-        for var in self.events_checkboxes:
-            var.set(False)
+        for element in self.events_checkboxes:
+            element['var'].set(False)
+            element['button'].configure(style='NotSelectEvent.TCheckbutton')
         self.events_mask.reset()
         self.search_ghosts_by_mask_of_all_checkboxes()
 
     def max_len_ghost_name(self):
         return len(max([_(ghost.name) for ghost in self.ghosts.get_all], key=len))
+
+    @staticmethod
+    def max_len_event_name():
+        return len(max([_(ghost.name) for ghost in list(Paranormal)[1:-1]], key=len))
 
 
 if __name__ == '__main__':
